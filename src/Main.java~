@@ -1,0 +1,532 @@
+
+import java.awt.AWTException;
+import java.awt.Color;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
+
+
+public class Main {
+	static JPanel pan;
+	
+	static int n_buff_detect;
+	static int n_buff_fait;
+	static float[] ProbaClic;
+	
+	static int onglet;			// onglet actuel
+	static int seq;				// séquence actuelle
+	static int seq1;			// action actuelle
+	
+	static int ia;				// ia actuelle
+	
+	static Donnees donnees;
+	static int idim, jdim;		// dimensions de la fenetre
+	static int cond;
+	
+	static int n_seq;
+	static int n_seq1;
+	static int[][][] Im_Text_1;
+	static int[][][] Im_Text_2;
+	static int[][][] Im_Text_3;
+	static int iidim1;
+	static int jjdim1;
+	static int iidim2;
+	static int jjdim2;
+	static int iidim3;
+	static int jjdim3;
+	static int iidim_uru;
+	static int jjdim_uru;
+	static int[][][] Im_map_uru;
+	static int[][][][] Im_Cond;	// références ([indice ref,hauteur ref, largeur ref, couleur])
+	static int[][] coor_Cond;	// coordonnées des zones à vérifier [indice zone, coordonnée(0hauteur,1largeur)]
+	static int dim_cond;
+	
+	static JFrame window;		// fenetre
+	
+	static JLabel fondPanel;	// fond
+	static ImageIcon iBouton;	// bouton
+	static ImageIcon iOpen;		// lancement du bot
+	static ImageIcon iBot;		// bot
+	static ImageIcon iScroll;	// scroll
+	
+	
+	static JFrame etalonChat;
+	static JFrame etalonSelec;
+	static JFrame etalonJeux;
+	static JFrame etalonCarte;
+	static JFrame etalonInt;
+	static JFrame etalonVie;
+	static JFrame etalonMana;
+	static JPanel panEtalonChat;
+	static JPanel panEtalonSelec;
+	static JPanel panEtalonJeux;
+	static JPanel panEtalonCarte;
+	static JPanel panEtalonInt;
+	static JPanel panEtalonVie;
+	static JPanel panEtalonMana;
+	static Recalage references;
+	
+	
+	public static void main(String[] args) throws AWTException, InterruptedException, IOException 
+	{
+		n_buff_detect = 0;
+		n_buff_fait = 0;
+		onglet = 1;
+		ProbaClic = new float[9];
+		idim = 650;
+		jdim = 1000;
+		int i,j,k;
+		
+		// séquences
+		n_seq = 3;
+		n_seq1 = 15;
+		
+		// condition personalisable
+		dim_cond = 20;
+		Im_Cond = new int[n_seq1][dim_cond][dim_cond][3];
+		coor_Cond = new int [n_seq1][2];
+		
+		
+		Main.fondPanel = new JLabel(new ImageIcon("Icones/dallefond.png"));
+		Main.iBouton = new ImageIcon("Icones/Bouton.png");
+		Main.iOpen = new ImageIcon("Icones/Open.gif");
+		Main.iBot = new ImageIcon("Icones/Bot.gif");
+		Main.iScroll = new ImageIcon("Icones/Roll.gif");
+		
+		JButton bStop;
+		
+		// charge les données d'entrainement
+        
+        BufferedReader br = new BufferedReader(new FileReader("Config/ProbaClic.txt"));
+        StringBuilder sb = new StringBuilder();
+        String line = "125";
+        for(i=0;i<9;i++)
+        {
+			sb.append(line);
+	        sb.append(System.lineSeparator());
+	        line = br.readLine();
+			ProbaClic[i] = Float.valueOf(line);
+        }
+        
+        
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+		int jMax = gd.getDisplayMode().getWidth();
+		int iMax = gd.getDisplayMode().getHeight();
+
+		PanSelec selec;
+
+		    
+		// ========================== Etalonage des captures d'ecran ============
+
+		// charge l'invariant du chat
+		        
+		        br = new BufferedReader(new FileReader("Config/Im_InvChat.txt"));
+		        sb = new StringBuilder();
+		        line = "125";
+		    	sb.append(line);
+		        sb.append(System.lineSeparator());
+		        line = br.readLine();
+		        int iidim_chat = Integer.parseInt(line);
+		        sb.append(line);
+		        sb.append(System.lineSeparator());
+		        line = br.readLine();
+		        int jjdim_chat = Integer.parseInt(line);
+		        int Im_InvChat[][][] = new int[iidim_chat][jjdim_chat][3];
+		        for(i=0;i<iidim_chat;i++)
+		        {
+		        	for(j=0;j<jjdim_chat;j++)
+		            {
+		        		for(k=0;k<3;k++)
+		                {
+		        			sb.append(line);
+		        	        sb.append(System.lineSeparator());
+		        	        line = br.readLine();
+		        	        Im_InvChat[i][j][k] = Integer.parseInt(line);
+		                }
+		            }
+		        }
+
+		// charge l'invariant de la carte
+		        
+		        br = new BufferedReader(new FileReader("Config/Im_InvMap.txt"));
+		        sb = new StringBuilder();
+		        line = "125";
+		    	sb.append(line);
+		        sb.append(System.lineSeparator());
+		        line = br.readLine();
+		        int iidim_carte = Integer.parseInt(line);
+		        sb.append(line);
+		        sb.append(System.lineSeparator());
+		        line = br.readLine();
+		        int jjdim_carte = Integer.parseInt(line);
+		        int Im_InvCarte[][][] = new int[iidim_carte][jjdim_carte][3];
+		        for(i=0;i<iidim_carte;i++)
+		        {
+		        	for(j=0;j<jjdim_carte;j++)
+		            {
+		        		for(k=0;k<3;k++)
+		                {
+		        			sb.append(line);
+		        	        sb.append(System.lineSeparator());
+		        	        line = br.readLine();
+		        	        Im_InvCarte[i][j][k] = Integer.parseInt(line);
+		                }
+		            }
+		        }
+		        
+		// charge l'invariant de la selection
+		        
+		        br = new BufferedReader(new FileReader("Config/Im_InvSelec.txt"));
+		        sb = new StringBuilder();
+		        line = "125";
+		    	sb.append(line);
+		        sb.append(System.lineSeparator());
+		        line = br.readLine();
+		        int iidim_selec = Integer.parseInt(line);
+		        sb.append(line);
+		        sb.append(System.lineSeparator());
+		        line = br.readLine();
+		        int jjdim_selec = Integer.parseInt(line);
+		        int Im_InvSelec[][][] = new int[iidim_selec][jjdim_selec][3];
+		        for(i=0;i<iidim_selec;i++)
+		        {
+		        	for(j=0;j<jjdim_selec;j++)
+		            {
+		        		for(k=0;k<3;k++)
+		                {
+		        			sb.append(line);
+		        	        sb.append(System.lineSeparator());
+		        	        line = br.readLine();
+		        	        Im_InvSelec[i][j][k] = Integer.parseInt(line);
+		                }
+		            }
+		        }
+		        
+		        // charge l'invariant de la vie
+		        
+		        br = new BufferedReader(new FileReader("Config/Im_InvVie.txt"));
+		        sb = new StringBuilder();
+		        line = "125";
+		    	sb.append(line);
+		        sb.append(System.lineSeparator());
+		        line = br.readLine();
+		        int iidim_vie = Integer.parseInt(line);
+		        sb.append(line);
+		        sb.append(System.lineSeparator());
+		        line = br.readLine();
+		        int jjdim_vie = Integer.parseInt(line);
+		        int Im_InvVie[][][] = new int[iidim_vie][jjdim_vie][3];
+		        for(i=0;i<iidim_vie;i++)
+		        {
+		        	for(j=0;j<jjdim_vie;j++)
+		            {
+		        		for(k=0;k<3;k++)
+		                {
+		        			sb.append(line);
+		        	        sb.append(System.lineSeparator());
+		        	        line = br.readLine();
+		        	        Im_InvVie[i][j][k] = Integer.parseInt(line);
+		                }
+		            }
+		        }
+		        
+		        Main.references = new Recalage(Im_InvChat, iidim_chat, jjdim_chat, Im_InvCarte, iidim_carte, jjdim_carte, Im_InvSelec, iidim_selec, jjdim_selec, Im_InvVie, iidim_vie, jjdim_vie);
+			    
+			    
+			    // ligne 1 chat
+			    panEtalonChat = new JPanel();
+			    panEtalonChat.setBackground(Color.WHITE); 
+			    etalonChat = new JFrame();
+			    etalonChat.setSize(400, 20);
+			    etalonChat.setLocation(references.jdimChat, references.idimChat);
+			    etalonChat.setUndecorated(true);
+			    etalonChat.setVisible(true);
+			    etalonChat.setResizable(false);
+			    etalonChat.setAlwaysOnTop(true);
+			    etalonChat.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			    etalonChat.setContentPane(panEtalonChat);
+
+			    // Selection
+			    panEtalonSelec = new JPanel();
+			    panEtalonSelec.setBackground(Color.WHITE); 
+			    etalonSelec = new JFrame();
+			    etalonSelec.setSize(150, 25);
+			    etalonSelec.setLocation(references.jdimSelec, references.idimSelec);
+			    etalonSelec.setUndecorated(true);
+			    etalonSelec.setVisible(true);
+			    etalonSelec.setResizable(false);
+			    etalonSelec.setAlwaysOnTop(true);
+			    etalonSelec.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			    etalonSelec.setContentPane(panEtalonSelec);
+			    
+			    // Carte
+			    panEtalonCarte = new JPanel();
+			    panEtalonCarte.setBackground(Color.WHITE); 
+			    etalonCarte = new JFrame();
+			    etalonCarte.setSize(160, 160);
+			    etalonCarte.setLocation(references.jdimCarte, references.idimCarte);
+			    etalonCarte.setUndecorated(true);
+			    etalonCarte.setVisible(true);
+			    etalonCarte.setResizable(false);
+			    etalonCarte.setAlwaysOnTop(true);
+			    etalonCarte.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			    etalonCarte.setContentPane(panEtalonCarte);
+			    
+			    // Vie
+			    panEtalonVie = new JPanel();
+			    panEtalonVie.setBackground(Color.WHITE); 
+			    etalonVie = new JFrame();
+			    etalonVie.setSize(90, 16);
+			    etalonVie.setLocation(references.jdimVie, references.idimVie);
+			    etalonVie.setUndecorated(true);
+			    etalonVie.setVisible(true);
+			    etalonVie.setResizable(false);
+			    etalonVie.setAlwaysOnTop(true);
+			    etalonVie.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			    etalonVie.setContentPane(panEtalonCarte);
+			    
+			    // Mana
+			    panEtalonMana = new JPanel();
+			    panEtalonMana.setBackground(Color.WHITE); 
+			    etalonMana = new JFrame();
+			    etalonMana.setSize(90, 16);
+			    etalonMana.setLocation(references.jdimVie+3, references.idimVie+32);
+			    etalonMana.setUndecorated(true);
+			    etalonMana.setVisible(true);
+			    etalonMana.setResizable(false);
+			    etalonMana.setAlwaysOnTop(true);
+			    etalonMana.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			    etalonMana.setContentPane(panEtalonCarte);
+			    
+			    // Corps chat (zone protégée)
+			    panEtalonInt = new JPanel();
+			    panEtalonInt.setBackground(Color.BLACK); 
+			    etalonInt = new JFrame();
+			    etalonInt.setSize(520, 150);
+			    etalonInt.setLocation(references.jdimChat, references.idimChat-150);
+			    etalonInt.setUndecorated(true);
+			    etalonInt.setVisible(true);
+			    etalonInt.setResizable(false);
+			    etalonInt.setAlwaysOnTop(true);
+			    etalonInt.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			    etalonInt.setContentPane(panEtalonInt);
+			    
+			    Thread.sleep(300);
+			    
+			    etalonChat.setOpacity(0);
+			    etalonSelec.setOpacity(0);
+			    etalonCarte.setOpacity(0);
+			    etalonVie.setOpacity(0);
+			    etalonMana.setOpacity(0);
+			    etalonInt.setOpacity(0);
+
+			    
+			    // Jeux
+			    panEtalonJeux = new JPanel();
+			    panEtalonJeux.setBackground(Color.WHITE); 
+			    etalonJeux = new JFrame();
+			    etalonJeux.setSize(1100, 500);
+			    etalonJeux.setLocation(100, 150);
+			    etalonJeux.setUndecorated(true);
+			    etalonJeux.setVisible(true);
+			    etalonJeux.setResizable(false);
+			    etalonJeux.setAlwaysOnTop(true);
+				etalonJeux.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+				etalonJeux.setContentPane(panEtalonJeux);
+			    
+			    Thread.sleep(300);
+			    etalonJeux.setOpacity(0);
+	    
+	    window = new JFrame();
+		window.setTitle("Vybot");
+		window.setSize(jdim, idim);
+		window.setResizable(false);
+		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		window.setVisible(true);
+		window.setLocation(jMax-jdim, 0);
+		
+		
+		pan = new JPanel();
+		pan.setBackground(Color.BLUE); 
+		pan.setLayout(null);
+	    window.setContentPane(pan);
+	    
+	    while(true)
+	    {
+	    	switch(onglet)
+	    	{
+	    		case 1:
+	    		{
+	    			// page de démarrage
+	    			window.setAlwaysOnTop(false);
+	    		    window.setSize(jdim, idim);
+	    			new PanSelec();
+	    		}
+	    		break;
+	    		case 2:
+	    		{
+	    			// choix de la séquences
+	    			window.setAlwaysOnTop(false);
+	    			window.setSize(jdim, idim);
+	    			new PanNewLearn();
+	    		}
+    			break;
+	    		case 3:
+	    		{
+	    			// non utilisé (avant beta 1)
+	    			window.setAlwaysOnTop(false);
+	    			window.setSize(jdim, idim);
+	    			new PanLearn();
+	    		}
+    			break;
+	    		case 4:
+	    		{
+	    			// modification d'une séquence
+	    			window.setAlwaysOnTop(false);
+	    			window.setSize(jdim, idim);
+	    			new PanLearn1(1);
+	    		}
+    			break;
+	    		case 5:
+	    		{
+	    			// modification d'une condition
+	    			window.setAlwaysOnTop(false);
+	    			window.setSize(jdim, idim);
+	    			new PanLearn2();
+	    		}
+    			break;
+	    		case 6:
+	    		{
+	    			// modification d'une action spéciale
+	    			window.setAlwaysOnTop(false);
+	    			window.setSize(jdim, idim);
+	    			new PanLearn1(2);
+	    		}
+    			break;
+	    		case 7:
+	    		{
+	    			// choix du bot
+	    			window.setAlwaysOnTop(true);
+	    			window.setSize(135, 128);
+	    			window.setLocation(jMax-135, 0);
+	    			window.setLocation(references.jdimCarte-170, 0);
+	    			new PanBot();
+	    			window.setLocation(jMax-jdim, 0);
+	    		}
+    			break;
+	    		case 8:
+	    		{
+	    			// bot actif
+	    			window.setAlwaysOnTop(true);
+	    			window.setSize(135, 128);
+	    			window.setLocation(jMax-135, 0);
+	    			window.setLocation(references.jdimCarte-170, 0);
+	    			new Clic();
+	    			window.setLocation(jMax-jdim, 0);
+	    		}
+    			break;
+	    		case 9:
+	    		{
+	    			// étalonage
+	    			window.setAlwaysOnTop(true);
+	    			Main.iOpen.getImage().flush();
+	    			window.setSize(135, 128);
+	    			window.setLocation(jMax-135, 0);
+	    			bStop = new JButton(Main.iOpen);
+	    			bStop.setVerticalTextPosition(SwingConstants.CENTER);
+	    			bStop.setHorizontalTextPosition(SwingConstants.CENTER);
+	    			bStop.setBounds(0, 0, 130, 100);
+	    			Main.pan.add(bStop);
+	    			Main.pan.repaint();
+	    			
+	    			Thread.sleep(200);
+	    			
+	    			Main.references = new Recalage(Im_InvChat, iidim_chat, jjdim_chat, Im_InvCarte, iidim_carte, jjdim_carte, Im_InvSelec, iidim_selec, jjdim_selec, Im_InvVie, iidim_vie, jjdim_vie);
+				    Main.etalonChat.setLocation(Main.references.jdimChat, Main.references.idimChat);
+	    	        Main.etalonSelec.setLocation(Main.references.jdimSelec, Main.references.idimSelec);
+	    	        Main.etalonCarte.setLocation(Main.references.jdimCarte, Main.references.idimCarte);
+	    	        Main.etalonInt.setLocation(Main.references.jdimChat, Main.references.idimChat-150);
+	    	        Main.etalonVie.setLocation(Main.references.jdimVie, Main.references.idimVie);
+	    	        Main.etalonMana.setLocation(Main.references.jdimVie+3, Main.references.idimVie+32);
+	    	        
+	    	        Main.etalonChat.setOpacity(1);
+	    		    Main.etalonSelec.setOpacity(1);
+	    		    Main.etalonCarte.setOpacity(1);
+	    		    Main.etalonInt.setOpacity(1);  
+	    		    Main.etalonVie.setOpacity(1);
+	    		    Main.etalonMana.setOpacity(1); 
+	    	        Thread.sleep(1500);
+	    		    Main.etalonChat.setOpacity(0);
+	    		    Main.etalonSelec.setOpacity(0);
+	    		    Main.etalonCarte.setOpacity(0);
+	    		    Main.etalonInt.setOpacity(0);
+	    		    Main.etalonVie.setOpacity(0);
+	    		    Main.etalonMana.setOpacity(0);
+	    		    
+	    		    Main.etalonJeux.setOpacity(1);
+	    		    Thread.sleep(500);
+	    		    Main.etalonJeux.setOpacity(0);
+	    		    
+	    			Main.onglet = 1;
+	    			window.setLocation(jMax-jdim, 0);
+	    		}
+    			break;
+	    		case 10:
+	    		{
+	    			// choix de l'ia (apprentissage)
+	    			window.setAlwaysOnTop(false);
+	    			new PanNewIA();
+	    		}
+	    		break;
+			    case 11:
+				{
+					// page de screen pour l'IA
+					window.setAlwaysOnTop(true);
+					window.setSize(135, 258);
+					window.setLocation(jMax-135, 0);
+					new PanIA1();
+					window.setLocation(jMax-jdim, 0);
+				}
+				break;
+			    case 12:
+				{
+					// page de screen pour la souris
+					window.setAlwaysOnTop(true);
+					window.setSize(135, 258);
+					window.setLocation(jMax-135, 0);
+					new PanSouris(1);
+					window.setLocation(jMax-jdim, 0);
+				}
+			    case 13:
+				{
+					// page de screen pour la souris
+					window.setAlwaysOnTop(true);
+					window.setSize(135, 258);
+					window.setLocation(jMax-135, 0);
+					new PanSouris(2);
+					window.setLocation(jMax-jdim, 0);
+				}
+				break;
+	    	}
+    	
+	    pan.removeAll();
+		
+	    }
+		
+		
+	    
+
+	}
+
+}
+
